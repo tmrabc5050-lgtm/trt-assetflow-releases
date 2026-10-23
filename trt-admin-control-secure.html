@@ -1,0 +1,443 @@
+﻿<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRT AssetFlow Studios — Admin Control Room (লাইসেন্স ম্যানেজার)</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+    .stat-card h4 { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .stat-card .val { font-size: 28px; font-weight: 800; color: #ffffff; }
+    .gen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      align-items: end;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrap">
+      <a class='logo-brand' href='/'>
+        <div class="logo-icon">🔐</div>
+        <span>TRT AssetFlow Admin</span>
+      </a>
+      <div class="nav-links">
+        <a class='nav-link' href='/'>← ক্লায়েন্ট পোর্টাল</a>
+        <button id="btnAdminLogout" class="admin-badge-link" style="display: none; cursor: pointer;">লগআউট</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 60px;">
+    <!-- Login Screen -->
+    <div id="adminAuthSection" style="max-width: 420px; margin: 40px auto;" class="admin-card">
+      <h3 style="margin-bottom: 14px; font-size: 18px; color: #fff;">🔐 অ্যাডমিন পাসকোড দিন</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 18px;">
+        লাইসেন্স তৈরি ও ম্যানেজ করতে আপনার অ্যাডমিন সিক্রেট কোড প্রবেশ করান।
+      </p>
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <input type="password" id="adminPassInput" class="input-ctrl" placeholder="Admin Passcode" required>
+        </div>
+        <button type="submit" class="btn-primary">লগইন করুন</button>
+        <p id="adminLoginErr" style="color: #f87171; font-size: 12px; margin-top: 10px; display: none;"></p>
+      </form>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="adminDashSection" style="display: none;">
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <h4>সর্বমোট লাইসেন্স</h4>
+          <div class="val" id="statTotal">0</div>
+        </div>
+        <div class="stat-card">
+          <h4>ব্যবহারের জন্য প্রস্তুত (Unused)</h4>
+          <div class="val" id="statUnused" style="color: #38bdf8;">0</div>
+        </div>
+        <div class="stat-card">
+          <h4>সক্রিয় প্রো ইউজার (Active)</h4>
+          <div class="val" id="statActive" style="color: #10b981;">0</div>
+        </div>
+        <div class="stat-card">
+          <h4>মেয়াদোত্তীর্ণ (Expired)</h4>
+          <div class="val" id="statExpired" style="color: #f87171;">0</div>
+        </div>
+      </div>
+
+      
+                  <!-- ============================================================== -->
+      <!-- SUPER SIMPLE COUPON MANAGER (সহজ কুপন ম্যানেজার)                 -->
+      <!-- ============================================================== -->
+      <div class="admin-card" id="couponManagementCard" style="margin-bottom: 24px; border: 1px solid rgba(56, 189, 248, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">
+          <div>
+            <h3 style="font-size: 18px; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+              <span>🎟️</span> সহজ কুপন ম্যানেজার (Coupon Manager)
+            </h3>
+            <p style="font-size: 13px; color: #94a3b8; margin: 0;">
+              শুধু কুপনের নাম ও কত % ছাড় দিবেন তা লিখে সংরক্ষণ করুন। কাস্টমার সেই ছাড় পেয়ে যাবে।
+            </p>
+          </div>
+          <button type="button" class="btn-copy" onclick="loadCoupons()" style="background: rgba(255,255,255,0.08); cursor: pointer;">🔄 রিফ্রেশ</button>
+        </div>
+
+        <!-- Super Simple Form: Just Code & Percent -->
+                <!-- Smart Multi-Tier Coupon Form -->
+        <form id="createCouponForm" style="background: rgba(0,0,0,0.3); padding: 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
+          <!-- Row 1: Code -->
+          <div style="margin-bottom: 14px;">
+            <label style="font-weight: 600; color: #e2e8f0; margin-bottom: 6px; display: block;">১. কুপন কোড লিখুন *</label>
+            <input type="text" id="cpCode" class="input-ctrl" placeholder="যেমন: TRT20 বা OFFER বা EID50" style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px; font-size: 15px;" required>
+          </div>
+
+          <!-- Row 2: Discount Mode Selector -->
+          <div style="margin-bottom: 14px; background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+            <label style="font-weight: 600; color: #e2e8f0; margin-bottom: 8px; display: block; font-size: 13px;">২. ছাড়ের ধরন নির্বাচন করুন:</label>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #38bdf8; font-weight: 600; font-size: 13px;">
+                <input type="radio" name="discountMode" value="unified" checked onchange="toggleDiscountMode('unified')">
+                🌐 সাধারণ মোড (সব বা নির্বাচিত প্যাকেজে একই % ছাড়)
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #a78bfa; font-weight: 600; font-size: 13px;">
+                <input type="radio" name="discountMode" value="tiered" onchange="toggleDiscountMode('tiered')">
+                ⚡ অ্যাডভান্সড মোড (প্রতিটি প্যাকেজে আলাদা আলাদা % ছাড়)
+              </label>
+            </div>
+          </div>
+
+          <!-- Box A: Unified Mode -->
+          <div id="unifiedModeBox">
+            <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px;">
+              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 160px;">
+                <label style="font-weight: 600; color: #e2e8f0; margin-bottom: 6px; display: block;">ছাড়ের পরিমাণ (%) *</label>
+                <div style="position: relative;">
+                  <input type="number" id="cpDiscountValue" class="input-ctrl" placeholder="যেমন: 20" value="20" min="1" max="100" style="padding-right: 32px; font-weight: bold; font-size: 16px; color: #34d399;">
+                  <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-weight: bold;">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 16px;">
+              <label style="font-weight: 600; color: #e2e8f0; margin-bottom: 8px; display: block; font-size: 13px;">
+                কোন কোন প্যাকেজে এই কুপন কাজ করবে? <span style="font-weight: normal; color: #94a3b8;">(এক বা একাধিক প্যাকেজে টিক দিন):</span>
+              </label>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #38bdf8;">
+                  <input type="checkbox" id="plan_all" value="ALL" checked onchange="togglePlanAll(this)"> 🌐 সব প্যাকেজে প্রযোজ্য
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #e2e8f0;">
+                  <input type="checkbox" class="plan-cb" value="pro_monthly" onchange="toggleSinglePlan(this)"> ⚡ ১ মাস (Monthly)
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #e2e8f0;">
+                  <input type="checkbox" class="plan-cb" value="pro_quarterly" onchange="toggleSinglePlan(this)"> 📆 ৩ মাস (Quarterly)
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #e2e8f0;">
+                  <input type="checkbox" class="plan-cb" value="pro_half_yearly" onchange="toggleSinglePlan(this)"> 🗓️ ৬ মাস (Half-Yearly)
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #e2e8f0;">
+                  <input type="checkbox" class="plan-cb" value="pro_yearly" onchange="toggleSinglePlan(this)"> 📅 ১ বছর (Yearly)
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #e2e8f0;">
+                  <input type="checkbox" class="plan-cb" value="lifetime" onchange="toggleSinglePlan(this)"> 👑 Lifetime
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Box B: Tiered Mode (Custom % per plan) -->
+          <div id="tieredModeBox" style="display: none; background: rgba(167, 139, 250, 0.05); padding: 14px; border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.2); margin-bottom: 16px;">
+            <p style="font-size: 13px; color: #c4b5fd; margin-top: 0; margin-bottom: 12px; font-weight: 500;">
+              💡 যে যে প্যাকেজে ছাড় দিতে চান, সেগুলোর পাশে % লিখুন। যে প্যাকেজে ছাড় দিতে চান না তা খালি রাখুন:
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+              <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                <label style="font-size: 12px; color: #e2e8f0; font-weight: 600; display: block; margin-bottom: 4px;">⚡ ১ মাস (৳২৫০)</label>
+                <div style="position: relative;">
+                  <input type="number" id="tier_pro_monthly" class="input-ctrl tier-input" placeholder="যেমন: 10" min="1" max="100" style="padding-right: 28px; height: 36px; font-weight: bold; color: #34d399;">
+                  <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12px; font-weight: bold;">%</span>
+                </div>
+              </div>
+              <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                <label style="font-size: 12px; color: #e2e8f0; font-weight: 600; display: block; margin-bottom: 4px;">📆 ৩ মাস (৳৬৫০)</label>
+                <div style="position: relative;">
+                  <input type="number" id="tier_pro_quarterly" class="input-ctrl tier-input" placeholder="যেমন: 15" min="1" max="100" style="padding-right: 28px; height: 36px; font-weight: bold; color: #34d399;">
+                  <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12px; font-weight: bold;">%</span>
+                </div>
+              </div>
+              <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                <label style="font-size: 12px; color: #e2e8f0; font-weight: 600; display: block; margin-bottom: 4px;">🗓️ ৬ মাস (৳১২০০)</label>
+                <div style="position: relative;">
+                  <input type="number" id="tier_pro_half_yearly" class="input-ctrl tier-input" placeholder="যেমন: 20" min="1" max="100" style="padding-right: 28px; height: 36px; font-weight: bold; color: #34d399;">
+                  <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12px; font-weight: bold;">%</span>
+                </div>
+              </div>
+              <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                <label style="font-size: 12px; color: #e2e8f0; font-weight: 600; display: block; margin-bottom: 4px;">📅 ১ বছর (৳২০০০)</label>
+                <div style="position: relative;">
+                  <input type="number" id="tier_pro_yearly" class="input-ctrl tier-input" placeholder="যেমন: 25" min="1" max="100" style="padding-right: 28px; height: 36px; font-weight: bold; color: #34d399;">
+                  <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12px; font-weight: bold;">%</span>
+                </div>
+              </div>
+              <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+                <label style="font-size: 12px; color: #e2e8f0; font-weight: 600; display: block; margin-bottom: 4px;">👑 Lifetime (৳৩০০০)</label>
+                <div style="position: relative;">
+                  <input type="number" id="tier_lifetime" class="input-ctrl tier-input" placeholder="যেমন: 30" min="1" max="100" style="padding-right: 28px; height: 36px; font-weight: bold; color: #34d399;">
+                  <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12px; font-weight: bold;">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button & Auto-Merge Note -->
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <button type="submit" class="btn-primary" id="btnSaveCoupon" style="height: 44px; padding: 0 32px; font-weight: bold; font-size: 15px; margin-bottom: 0;">
+              ➕ কুপন চালু করুন
+            </button>
+            <span style="font-size: 12px; color: #38bdf8;">
+              🔒 স্মার্ট অটো-মার্জ: একই কোড দিয়ে ভিন্ন প্যাকেজে ছাড় দিলে পূর্বের অফার হারাবে না, স্বয়ংক্রিয়ভাবে যুক্ত হয়ে যাবে।
+            </span>
+          </div>
+        </form>
+
+        <!-- Active Coupons Table -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h4 style="font-size: 14px; color: #38bdf8; margin: 0;">📋 সক্রিয় কুপন সমূহ (বর্তমানে চালু আছে)</h4>
+          <span style="font-size: 12px; color: #94a3b8;">যেকোনো কুপন বন্ধ করতে ডিলিট চাপুন</span>
+        </div>
+
+        <div class="table-wrap" style="max-height: 280px; overflow-y: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="padding: 10px 14px;">কুপন কোড</th>
+                <th style="padding: 10px 14px;">ছাড়ের পরিমাণ</th>
+                <th style="padding: 10px 14px;">কোন প্যাকেজে কাজ করবে</th>
+                <th style="padding: 10px 14px; text-align: center;">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="couponsTableBody">
+              <!-- Rendered automatically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- Generator Card -->
+      <div class="admin-card">
+        <h3 style="font-size: 18px; color: #fff; margin-bottom: 14px;">⚡ ১-ক্লিকে নতুন লাইসেন্স কি তৈরি করুন</h3>
+        <form id="genKeysForm">
+                    <div class="gen-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; align-items: end;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>কয়টি কি বানাবেন?</label>
+              <select id="genCount" class="input-ctrl">
+                <option value="1" selected>১টি কি (নির্দিষ্ট কাস্টমারের জন্য)</option>
+                <option value="5">৫টি কি</option>
+                <option value="10">১০টি কি</option>
+                <option value="25">২৫টি কি</option>
+                <option value="50">৫০টি কি</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>মেয়াদ / দিন নির্বাচন করুন *</label>
+              <select id="genDuration" class="input-ctrl" onchange="toggleCustomDaysInput(this.value)">
+                <option value="3">⚡ ৩ দিন (শর্ট ট্রায়াল)</option>
+                <option value="7">⚡ ৭ দিন (১ সপ্তাহ ট্রায়াল)</option>
+                <option value="15">⚡ ১৫ দিন (১৫ দিনের এক্সেস)</option>
+                <option value="30" selected>📅 ৩০ দিন (১ মাস)</option>
+                <option value="90">🗓️ ৯০ দিন (৩ মাস)</option>
+                <option value="180">🗓️ ১৮০ দিন (৬ মাস)</option>
+                <option value="365">📅 ৩৬৫ দিন (১ বছর)</option>
+                <option value="9999">👑 লাইফটাইম (চিরস্থায়ী)</option>
+                <option value="custom" style="color: #38bdf8; font-weight: bold;">✍️ কাস্টম দিন (নিজে টাইপ করুন)</option>
+              </select>
+            </div>
+
+            <!-- Custom Days Input (shows when custom is selected) -->
+            <div class="form-group" id="customDaysGroup" style="display: none; margin-bottom: 0;">
+              <label style="color: #38bdf8;">✍️ কত দিন এক্সেস দিবেন? (দিন লিখুন) *</label>
+              <input type="number" id="genCustomDays" class="input-ctrl" placeholder="যেমন: ৩, ৫, ৭, ১৪ দিন" min="1" style="border-color: #38bdf8; font-weight: bold;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>নির্দিষ্ট কাস্টমারের ইমেইল (ঐচ্ছিক)</label>
+              <input type="email" id="genAssignEmail" class="input-ctrl" placeholder="যেমন: client@gmail.com">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>নোট / রেফারেন্স</label>
+              <input type="text" id="genNotes" class="input-ctrl" placeholder="যেমন: ৩ দিনের ফ্রি ট্রায়াল">
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnGenSubmit" style="height: 42px;">
+              ⚡ তৈরি করুন
+            </button>
+          </div>
+        </form>
+
+        <!-- Generated Result -->
+        <div id="genResultBox" style="display: none; margin-top: 20px; background: rgba(0,0,0,0.5); padding: 18px; border-radius: 10px; border: 1px dashed var(--accent);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong style="color: #38bdf8;">নতুন তৈরি হওয়া লাইসেন্স কি-সমূহ:</strong>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-copy" id="btnCopyAllGen">📋 সব কপি করুন</button>
+              <button type="button" class="btn-copy" id="btnDownloadGen" style="background: #2563eb;">📥 ডাউনলোড TXT</button>
+            </div>
+          </div>
+          <textarea id="genKeysOutput" class="input-ctrl" style="font-family: monospace; height: 110px; resize: none;" readonly></textarea>
+        </div>
+      </div>
+
+      <!-- Licenses Table -->
+      
+      <!-- Release & Download Management Card -->
+      <div class="admin-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+          <h3 style="font-size: 18px; color: #fff; margin-bottom: 0;">🚀 রিলিজ ও ডাউনলোড কন্ট্রোল (Release & Download Management)</h3>
+          <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+            🟢 Production Stable v2.0.0
+          </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 16px;">
+          <div>
+            <small style="color: var(--text-secondary); display: block; font-size: 11px;">সক্রিয় রিলিজ ফাইল</small>
+            <strong style="color: #38bdf8; font-size: 14px;">TRT.AssetFlow.Studios.Setup.2.0.0.exe</strong>
+          </div>
+          <div>
+            <small style="color: var(--text-secondary); display: block; font-size: 11px;">ডাউনলোড চ্যানেল</small>
+            <strong style="color: #34d399; font-size: 14px;">Direct HTTPS (GitHub Releases CDN)</strong>
+          </div>
+        </div>
+
+        <!-- Release Actions -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <a href="https://github.com/tmrtarekrahman/trt-assetflow-releases/releases/download/v2.0.0/TRT-AssetFlow-Studios-v2.0.0-Windows.zip" 
+             target="_blank" 
+             class="btn-copy" 
+             style="background: #2563eb; text-decoration: none; padding: 10px 18px; font-size: 13px;">
+            📥 সরাসরি ডাউনলোড টেস্ট
+          </a>
+          <button type="button" class="btn-copy" id="btnVerifyRelease" style="background: rgba(255,255,255,0.08); padding: 10px 18px; font-size: 13px;">
+            🧪 ভ্যালিডেট ডাউনলোড লিংক
+          </button>
+          <span id="releaseVerifyStatus" style="font-size: 12px; color: #34d399; display: none;"></span>
+        </div>
+      </div>
+
+<div class="admin-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 18px; color: #fff; margin-bottom: 4px;">📋 সকল লাইসেন্স তালিকা</h3>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="chkAutoRefresh" style="cursor: pointer;"> 
+                <span>⏱️ প্রতি ২০ সেকেন্ডে অটো রিফ্রেশ</span>
+              </label>
+              <span id="autoRefreshStatus" style="color: #34d399; font-size: 11px; display: none;">(সক্রিয়)</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" id="tableSearch" class="input-ctrl" placeholder="ইমেইল বা কি দিয়ে খুঁজুন..." style="width: 220px; padding: 8px 12px; margin-bottom: 0;">
+            <button type="button" class="btn-copy" id="btnExportLicensesCsv" style="background: #0284c7;">📥 এক্সপোর্ট CSV</button>
+            <button type="button" class="btn-copy" id="btnRefreshTable" style="background: #475569;">🔄 রিফ্রেশ</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>লাইসেন্স কি</th>
+                <th>প্ল্যান / মেয়াদ</th>
+                <th>স্ট্যাটাস</th>
+                <th>ইউজার ইমেইল</th>
+                <th>ডিভাইস আইডি</th>
+                <th>মেয়াদ শেষ</th>
+                <th>লাইসেন্স অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="licensesTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted);">লোড হচ্ছে...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SMS Payments Table -->
+      <div class="admin-card" style="margin-top: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 18px; color: #fff; margin-bottom: 4px;">📱 বিকাশ ও নগদ এসএমএস লগ (ফোন থেকে আসা পেমেন্ট)</h3>
+            <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">অ্যান্ড্রয়েড ফোন থেকে আসা সকল এসএমএস এবং ট্রানজ্যাকশন স্ট্যাটাস (১০০% ক্লিন)</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn-copy" id="btnClearSmsLogs" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 6px 14px;">🗑️ লগ মুছুন</button>
+            <button type="button" class="btn-copy" id="btnExportSmsCsv" style="background: #0284c7; padding: 6px 12px;">📥 এসএমএস CSV</button>
+            <span id="smsCountBadge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 20px;">০ টি এসএমএস</span>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>TrxID</th>
+                <th>প্রেরক (Sender)</th>
+                <th>টাকার পরিমাণ</th>
+                <th>ক্লেম স্ট্যাটাস</th>
+                <th>ব্যবহারকারী ইমেইল</th>
+                <th>সময় ও তারিখ</th>
+              </tr>
+            </thead>
+            <tbody id="smsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">ফোন থেকে এখনো কোনো এসএমএস আসেনি (কোনো পূর্ববর্তী রেকর্ড নেই)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="./portal.js?v=2.5.0"></script>
+  <script>
+    function togglePlanAll(allCb) {
+      const cbs = document.querySelectorAll('.plan-cb');
+      if (allCb.checked) {
+        cbs.forEach(cb => { cb.checked = false; });
+      }
+    }
+    function toggleSinglePlan(singleCb) {
+      const allCb = document.getElementById('plan_all');
+      const checked = document.querySelectorAll('.plan-cb:checked');
+      if (checked.length > 0 && allCb) {
+        allCb.checked = false;
+      } else if (checked.length === 0 && allCb) {
+        allCb.checked = true;
+      }
+    }
+  </script>
+</body>
+</html>
